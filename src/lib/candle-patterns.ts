@@ -19,6 +19,11 @@ export interface RsiData {
   description: string;
 }
 
+export interface StrategySignal {
+  action: "buy" | "sell" | "wait";
+  reason: string;
+}
+
 export interface CandleAnalysis {
   trend: { direction: string; description: string };
   lastCandle: PatternResult;
@@ -28,10 +33,13 @@ export interface CandleAnalysis {
   summary: string;
   score: number;
   signal: "strong_buy" | "buy" | "hold" | "sell" | "strong_sell";
+  conservative: StrategySignal;
+  aggressive: StrategySignal;
   action: "buy" | "sell" | "wait";
   actionReason: string;
   target: number;
   stopLoss: number;
+  atr: number;
 }
 
 function bodySize(c: Candle) {
@@ -106,6 +114,19 @@ function calculateRSI(candles: Candle[], period = 14): RsiData {
     status: "neutral",
     description: "RSI en " + value + " — zona neutral. No hay senal de sobreventa ni sobrecompra.",
   };
+}
+
+function calculateATR(candles: Candle[], period = 14): number {
+  if (candles.length < period + 1) return 0;
+  let atrSum = 0;
+  for (let i = candles.length - period; i < candles.length; i++) {
+    const high = candles[i].high;
+    const low = candles[i].low;
+    const prevClose = candles[i - 1].close;
+    const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+    atrSum += tr;
+  }
+  return atrSum / period;
 }
 
 function detectSinglePattern(c: Candle): PatternResult {
@@ -270,20 +291,22 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
     summary = "Senales mixtas. El mercado esta en fase de transicion — esperar un patron mas claro antes de actuar.";
   }
 
-  let score = 0;
-  if (trend.direction === "alcista") score += 20 + Math.min(trendPct * 4, 20);
-  else if (trend.direction === "bajista") score -= 20 + Math.min(Math.abs(trendPct) * 4, 20);
-  score += (bullCount - bearCount) * 15;
-  if (volRatio > 1.5 && bullCount > bearCount) score += 15;
-  else if (volRatio > 1.5 && bearCount > bullCount) score -= 15;
+  // Score de tendencia (sin RSI — puro trend following)
+  let trendScore = 0;
+  if (trend.direction === "alcista") trendScore += 20 + Math.min(trendPct * 4, 20);
+  else if (trend.direction === "bajista") trendScore -= 20 + Math.min(Math.abs(trendPct) * 4, 20);
+  trendScore += (bullCount - bearCount) * 15;
+  if (volRatio > 1.5 && bullCount > bearCount) trendScore += 15;
+  else if (volRatio > 1.5 && bearCount > bullCount) trendScore -= 15;
   const last5 = candles.slice(-5);
   const upCandles = last5.filter((c) => c.close > c.open).length;
-  score += (upCandles - 2.5) * 6;
+  trendScore += (upCandles - 2.5) * 6;
+  trendScore = Math.max(-100, Math.min(100, Math.round(trendScore)));
 
-  // RSI: sobrevendido suma puntos (oportunidad de rebote), sobrecomprado resta
+  // Score combinado (incluye RSI)
+  let score = trendScore;
   if (rsi.status === "sobrevendido") score += 25;
   else if (rsi.status === "sobrecomprado") score -= 25;
-
   score = Math.max(-100, Math.min(100, Math.round(score)));
 
   let signal: "strong_buy" | "buy" | "hold" | "sell" | "strong_sell";
@@ -293,51 +316,71 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
   else if (score > -50) signal = "sell";
   else signal = "strong_sell";
 
-  let action: "buy" | "sell" | "wait";
-  let actionReason: string;
-
   const isBullishSignal = bullCount > bearCount;
   const isBearishSignal = bearCount > bullCount;
   const isUptrend = trend.direction === "alcista";
   const isDowntrend = trend.direction === "bajista";
   const isHighVol = volRatio > 1.2;
-
   const isOversold = rsi.status === "sobrevendido";
   const isOverbought = rsi.status === "sobrecomprado";
 
-  if (isOversold && (isBullishSignal || !isBearishSignal)) {
-    action = "buy";
-    actionReason = "RSI en " + rsi.value + " (sobrevendido) — el activo cayo demasiado y es probable un rebote. Oportunidad de compra por sobreventa.";
-  } else if (isBullishSignal && isUptrend && isHighVol) {
-    action = "buy";
-    actionReason = "Patron alcista + tendencia alcista + volumen alto (" + volRatio.toFixed(1) + "x). RSI en " + rsi.value + ". Las condiciones se cumplen — senal de entrada.";
+  // ESTRATEGIA CONSERVADORA — sigue la tendencia
+  let conservative: StrategySignal;
+  if (isBullishSignal && isUptrend && isHighVol) {
+    conservative = { action: "buy", reason: "Tendencia alcista + patron alcista + volumen alto. Entrada segura a favor de la tendencia." };
   } else if (isBullishSignal && isUptrend) {
-    action = "buy";
-    actionReason = "Patron alcista + tendencia alcista. RSI en " + rsi.value + ". Senal valida pero con volumen promedio (" + volRatio.toFixed(1) + "x).";
-  } else if (isOversold && isDowntrend) {
-    action = "buy";
-    actionReason = "RSI en " + rsi.value + " (sobrevendido) en tendencia bajista — posible piso. El activo esta castigado y podria rebotar. Entrada agresiva.";
-  } else if (isOverbought && isBearishSignal) {
-    action = "sell";
-    actionReason = "RSI en " + rsi.value + " (sobrecomprado) + senal bajista. El activo subio demasiado rapido — protege ganancias o espera correccion.";
+    conservative = { action: "buy", reason: "Tendencia alcista confirmada. Entrada valida con volumen promedio." };
   } else if (isBearishSignal && isDowntrend) {
-    action = "sell";
-    actionReason = "Patron bajista + tendencia bajista. RSI en " + rsi.value + ". Si tenes esta posicion, considera vender — el impulso esta en contra.";
+    conservative = { action: "sell", reason: "Tendencia bajista + patron bajista. Si tenes posicion, considerar salir." };
   } else if (isBearishSignal && isUptrend) {
-    action = "sell";
-    actionReason = "Senal de reversa bajista en tendencia alcista. RSI en " + rsi.value + ". La tendencia podria estar girando — protege tus ganancias.";
-  } else if (isBullishSignal && isDowntrend && !isOversold) {
-    action = "wait";
-    actionReason = "Vela alcista en tendencia bajista pero RSI en " + rsi.value + " (no sobrevendido). Espera confirmacion de reversa antes de entrar.";
+    conservative = { action: "sell", reason: "Senal bajista en tendencia alcista. Posible giro — proteger ganancias." };
   } else {
-    action = "wait";
-    actionReason = "RSI en " + rsi.value + " — zona neutral. Sin alineacion clara entre senales, tendencia y RSI. Espera un setup mas limpio.";
+    conservative = { action: "wait", reason: "Sin alineacion clara entre tendencia y velas. Esperar confirmacion." };
   }
 
-  // Target (+2%) y Stop Loss (-2%) desde el precio actual
-  const currentPrice = last.close;
-  const target = currentPrice * 1.02;
-  const stopLoss = currentPrice * 0.98;
+  // ESTRATEGIA AGRESIVA — busca rebotes por sobreventa
+  let aggressive: StrategySignal;
+  if (isOversold && isDowntrend && volRatio > 1.0) {
+    aggressive = { action: "buy", reason: "RSI " + rsi.value + " sobrevendido + volumen en caida. Posible capitulacion — oportunidad de rebote tecnico." };
+  } else if (isOversold) {
+    aggressive = { action: "buy", reason: "RSI " + rsi.value + " sobrevendido. El activo cayo demasiado — probable rebote de corto plazo." };
+  } else if (isOverbought && isBearishSignal) {
+    aggressive = { action: "sell", reason: "RSI " + rsi.value + " sobrecomprado + senal bajista. Correccion probable." };
+  } else if (isOverbought) {
+    aggressive = { action: "wait", reason: "RSI " + rsi.value + " sobrecomprado pero sin senal bajista. Podria seguir subiendo — esperar confirmacion." };
+  } else {
+    aggressive = { action: "wait", reason: "RSI " + rsi.value + " en zona neutral. Sin oportunidad de rebote." };
+  }
 
-  return { trend, lastCandle, recentPatterns, volumeSignal, rsi, summary, score, signal, action, actionReason, target, stopLoss };
+  // ACCION FINAL — prioriza conservadora, pero si ambas dicen lo mismo es mas fuerte
+  let action: "buy" | "sell" | "wait";
+  let actionReason: string;
+
+  if (conservative.action === "buy" && aggressive.action === "buy") {
+    action = "buy";
+    actionReason = "Ambas estrategias coinciden en COMPRAR. Tendencia + RSI alineados — senal fuerte de entrada.";
+  } else if (conservative.action === "buy") {
+    action = "buy";
+    actionReason = conservative.reason;
+  } else if (aggressive.action === "buy" && conservative.action === "wait") {
+    action = "buy";
+    actionReason = "Compra especulativa por rebote (RSI " + rsi.value + "). La tendencia no acompana — usar stop loss ajustado.";
+  } else if (aggressive.action === "buy" && conservative.action === "sell") {
+    action = "wait";
+    actionReason = "Conflicto: la tendencia dice VENDER pero el RSI (" + rsi.value + ") sugiere rebote. Esperar — no hay consenso.";
+  } else if (conservative.action === "sell") {
+    action = "sell";
+    actionReason = conservative.reason;
+  } else {
+    action = "wait";
+    actionReason = "Sin senal clara en ninguna estrategia. Paciencia — esperar un setup definido.";
+  }
+
+  // ATR para SL/TP dinamico
+  const atr = calculateATR(candles);
+  const currentPrice = last.close;
+  const target = atr > 0 ? currentPrice + atr * 2 : currentPrice * 1.02;
+  const stopLoss = atr > 0 ? currentPrice - atr * 1.5 : currentPrice * 0.98;
+
+  return { trend, lastCandle, recentPatterns, volumeSignal, rsi, summary, score, signal, conservative, aggressive, action, actionReason, target, stopLoss, atr };
 }

@@ -388,7 +388,7 @@ export default function Dashboard() {
 
             {analysis && (
               <div className="lg:w-80 shrink-0 space-y-5">
-                {/* Accion */}
+                {/* Accion final */}
                 <div className={`rounded-lg p-4 border-2 ${
                   analysis.action === "buy"
                     ? "border-green-500 bg-green-50"
@@ -397,28 +397,48 @@ export default function Dashboard() {
                     : "border-neutral-300 bg-neutral-50"
                 }`}>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Accion</h3>
+                    <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Veredicto</h3>
                     <ActionBadge action={analysis.action} />
                   </div>
-                  <p className={`text-lg font-semibold mb-2 ${
-                    analysis.action === "buy"
-                      ? "text-green-700"
-                      : analysis.action === "sell"
-                      ? "text-red-700"
-                      : "text-neutral-600"
-                  }`}>
-                    {analysis.action === "buy" && "Senal de entrada detectada"}
-                    {analysis.action === "sell" && "Senal de salida detectada"}
-                    {analysis.action === "wait" && "Sin senal clara aun"}
-                  </p>
                   <p className="text-xs text-neutral-600 leading-relaxed">
                     {analysis.actionReason}
                   </p>
                 </div>
 
+                {/* Dos estrategias */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`rounded-lg p-3 border ${
+                    analysis.conservative.action === "buy"
+                      ? "border-green-200 bg-green-50/50"
+                      : analysis.conservative.action === "sell"
+                      ? "border-red-200 bg-red-50/50"
+                      : "border-neutral-100"
+                  }`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <h4 className="text-[10px] font-semibold text-neutral-400 uppercase">Conservadora</h4>
+                      <ActionBadge action={analysis.conservative.action} />
+                    </div>
+                    <p className="text-[11px] text-neutral-500 leading-relaxed">{analysis.conservative.reason}</p>
+                  </div>
+                  <div className={`rounded-lg p-3 border ${
+                    analysis.aggressive.action === "buy"
+                      ? "border-green-200 bg-green-50/50"
+                      : analysis.aggressive.action === "sell"
+                      ? "border-red-200 bg-red-50/50"
+                      : "border-neutral-100"
+                  }`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <h4 className="text-[10px] font-semibold text-neutral-400 uppercase">Agresiva (rebote)</h4>
+                      <ActionBadge action={analysis.aggressive.action} />
+                    </div>
+                    <p className="text-[11px] text-neutral-500 leading-relaxed">{analysis.aggressive.reason}</p>
+                  </div>
+                </div>
+
                 {/* Target y Stop Loss */}
                 <div className="border border-neutral-100 rounded-lg p-4">
-                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Objetivo y Stop Loss</h3>
+                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Objetivo y Stop Loss</h3>
+                  <p className="text-[10px] text-neutral-300 mb-3">{"Basado en ATR (volatilidad real: $" + (analysis.atr < 10 ? analysis.atr.toFixed(4) : analysis.atr.toFixed(2)) + ")"}</p>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-neutral-500">Precio actual</span>
@@ -427,13 +447,13 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-green-600">Vender en (+2%)</span>
+                      <span className="text-xs text-green-600">Vender en (TP)</span>
                       <span className="text-sm font-medium text-green-600">
                         {analysis.target < 10 ? analysis.target.toFixed(4) : analysis.target.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-red-500">Cortar perdida (-2%)</span>
+                      <span className="text-xs text-red-500">Cortar perdida (SL)</span>
                       <span className="text-sm font-medium text-red-500">
                         {analysis.stopLoss < 10 ? analysis.stopLoss.toFixed(4) : analysis.stopLoss.toFixed(2)}
                       </span>
