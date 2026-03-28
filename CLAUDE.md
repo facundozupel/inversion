@@ -31,11 +31,11 @@ Envia alertas diarias por Telegram a las 9:30 AM Chile.
   - **ATR 14:** SL = precio - 1.5*ATR, TP = precio + 3*ATR. Ratio riesgo/beneficio 1:2
   - **Soporte/Resistencia:** min/max de ultimos 20 periodos
   - Score: -100 a +100. Trend (±40) + velas (±30) + RSI (±25) + volumen (±15) + momentum (±15)
-- `market-context.ts` — Contexto macro. VIX, indices, earnings, red flags, "seguro para operar"
+- `market-context.ts` — Contexto macro. VIX, indices, put/call ratio, earnings, red flags, "seguro para operar"
 
 ### Dominio: Datos de Mercado (`src/app/api/`)
 - `candles/route.ts` — Proxy a Yahoo Finance v8 chart API. OHLCV para cualquier ticker
-- `market-context/route.ts` — S&P 500, Nasdaq, VIX en paralelo. Cache 2 min
+- `market-context/route.ts` — S&P 500, Nasdaq, VIX + Put/Call SPX desde CBOE (~27K opciones) en paralelo. Cache 2 min (Yahoo) / 5 min (CBOE)
 - `earnings/route.ts` — Calendario de earnings via Yahoo Finance v10 quoteSummary. Cache 1 hora
 - `telegram-alert/route.ts` — Analiza todos los activos y envia reporte por Telegram. Ejecutado por cron
 

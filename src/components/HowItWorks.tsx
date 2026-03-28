@@ -34,7 +34,7 @@ export default function HowItWorks() {
       {/* Flujo general */}
       <Section title="Flujo de datos (paso a paso)">
         <Step number={1} title="Obtencion de datos (Yahoo Finance)" description="Se consultan precios historicos OHLCV (Open, High, Low, Close, Volume) de 17 activos en timeframe diario (1D). Tambien S&P 500, Nasdaq y VIX para contexto macro. Datos gratuitos, sin API key." />
-        <Step number={2} title="Contexto macro" description="Se verifica VIX (indice de miedo), estado de indices y calendario de earnings. Si VIX >= 30 o ambos indices rojos > 1.5%, se marca como NO SEGURO PARA OPERAR." />
+        <Step number={2} title="Contexto macro" description="Se verifica VIX (indice de miedo), Put/Call ratio SPX (sentimiento institucional desde ~27K opciones del CBOE), estado de indices y calendario de earnings. Si VIX >= 30, put/call > 1.0 (miedo) o ambos indices rojos > 1.5%, se marca como NO SEGURO PARA OPERAR." />
         <Step number={3} title="Analisis tecnico por activo" description="Cada activo se analiza con 6 indicadores: patrones de velas, tendencia (SMA 5 vs 20), RSI (14 periodos), ATR (volatilidad), volumen relativo, y soporte/resistencia (min/max 20 periodos)." />
         <Step number={4} title="Dos estrategias independientes" description="Conservadora: sigue la tendencia (compra si alcista + patron alcista + volumen). Agresiva: busca rebotes (compra si RSI < 30, sobrevendido)." />
         <Step number={5} title="Veredicto unificado" description="Se combinan ambas estrategias. Si coinciden = senal fuerte. Si se contradicen = ESPERAR. Nunca da senales contradictorias (ej: comprar y vender al mismo tiempo)." />
