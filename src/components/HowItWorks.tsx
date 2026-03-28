@@ -298,11 +298,72 @@ export default function HowItWorks() {
         </div>
       </Section>
 
+      {/* Validacion */}
+      <Section title="Validacion del sistema (Mis Trades)">
+        <p className="text-xs text-neutral-500 leading-relaxed mb-3">
+          Antes de confiar en el sistema o subir el monto, se recomienda hacer 5 trades reales con monto chico ($10.000 CLP) siguiendo las senales al pie de la letra.
+        </p>
+        <div className="space-y-2 text-xs">
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">1.</span>
+            <p className="text-neutral-500">Solo compra cuando el sistema dice COMPRAR y el mercado es SEGURO PARA OPERAR</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">2.</span>
+            <p className="text-neutral-500">Usa el TP y SL que te da el sistema — no los cambies</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">3.</span>
+            <p className="text-neutral-500">No te salgas antes del TP por miedo ni aguantes pasado el SL por esperanza</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">4.</span>
+            <p className="text-neutral-500">Registra cada trade en la pestana "Mis Trades" con precio de entrada, TP, SL y monto</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">5.</span>
+            <p className="text-neutral-500">Si ganas 3 de 5 con ratio 1:2 quedas en ganancia neta — el sistema funciona</p>
+          </div>
+        </div>
+        <div className="border border-neutral-100 rounded-lg p-3 mt-3">
+          <p className="text-xs font-semibold text-neutral-700 mb-1">Matematica del ratio 1:2</p>
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            Si arriesgas $100 por trade (SL) y buscas ganar $200 (TP), con 3 ganados y 2 perdidos el resultado es: (3 x $200) - (2 x $100) = $600 - $200 = +$400 de ganancia neta. Por eso el win rate no necesita ser alto — con ganar 3 de 5 (60%) ya es rentable.
+          </p>
+        </div>
+      </Section>
+
       {/* Telegram */}
       <Section title="Alertas por Telegram">
         <p className="text-xs text-neutral-500 leading-relaxed">
-          Cada dia de lunes a viernes a las 9:30 AM (hora Chile), el sistema analiza automaticamente todos los activos y envia un reporte por Telegram con: contexto del mercado, activos para comprar con target y stop loss, activos para vender, y activos en espera. Si ningun activo cumple las condiciones, el mensaje indica que no hay oportunidades y recomienda no operar.
+          Cada dia de lunes a viernes a las 9:30 AM (hora Chile), el sistema analiza automaticamente todos los activos y envia un reporte por Telegram con: contexto del mercado (indices, VIX, put/call SPX), activos para comprar con RSI, target y stop loss, activos para vender, y activos en espera. Si ningun activo cumple las condiciones, el mensaje indica que no hay oportunidades y recomienda no operar.
         </p>
+      </Section>
+
+      {/* Roadmap */}
+      <Section title="Proximos pasos">
+        <div className="space-y-2 text-xs">
+          <div className="flex items-start gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-green-100 text-green-700`}>Hecho</span>
+            <p className="text-neutral-500">Senales de compra/venta con dos estrategias + RSI + ATR</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-green-100 text-green-700`}>Hecho</span>
+            <p className="text-neutral-500">Contexto macro: VIX, indices, put/call SPX, earnings</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-green-100 text-green-700`}>Hecho</span>
+            <p className="text-neutral-500">Alertas diarias por Telegram</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-blue-100 text-blue-700`}>En curso</span>
+            <p className="text-neutral-500">Validacion con 5 trades reales (pestana Mis Trades)</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-neutral-100 text-neutral-500`}>Pendiente</span>
+            <p className="text-neutral-500">Automatizacion de compra/venta via API de Binance (Fase 2, solo si los 5 trades validan el sistema)</p>
+          </div>
+        </div>
       </Section>
 
       {/* Limitaciones */}
