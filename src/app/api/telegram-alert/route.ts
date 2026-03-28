@@ -125,7 +125,8 @@ export async function GET() {
 
     const last = candles[candles.length - 1];
     const price = last.close < 10 ? last.close.toFixed(4) : last.close.toFixed(2);
-    const line = `${stock.symbol} (${stock.name}) — $${price} | Score: ${analysis.score > 0 ? "+" : ""}${analysis.score}`;
+    const rsiTag = analysis.rsi.status === "sobrevendido" ? " [RSI " + analysis.rsi.value + " SOBREVENDIDO]" : analysis.rsi.status === "sobrecomprado" ? " [RSI " + analysis.rsi.value + " SOBRECOMPRADO]" : " [RSI " + analysis.rsi.value + "]";
+    const line = `${stock.symbol} (${stock.name}) — $${price}${rsiTag} | Score: ${analysis.score > 0 ? "+" : ""}${analysis.score}`;
 
     if (analysis.action === "buy") {
       buySignals.push(line + `\n  Target: $${analysis.target < 10 ? analysis.target.toFixed(4) : analysis.target.toFixed(2)} | Stop: $${analysis.stopLoss < 10 ? analysis.stopLoss.toFixed(4) : analysis.stopLoss.toFixed(2)}`);

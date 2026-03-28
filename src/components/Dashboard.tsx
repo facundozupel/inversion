@@ -500,6 +500,53 @@ export default function Dashboard() {
                   </div>
                 )}
 
+                <div className={`border rounded-lg p-4 ${
+                  analysis.rsi.status === "sobrevendido"
+                    ? "border-green-300 bg-green-50/50"
+                    : analysis.rsi.status === "sobrecomprado"
+                    ? "border-red-300 bg-red-50/50"
+                    : "border-neutral-100"
+                }`}>
+                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">RSI (Fuerza Relativa)</h3>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className={`text-2xl font-light ${
+                      analysis.rsi.status === "sobrevendido"
+                        ? "text-green-600"
+                        : analysis.rsi.status === "sobrecomprado"
+                        ? "text-red-600"
+                        : "text-neutral-900"
+                    }`}>
+                      {analysis.rsi.value}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                      analysis.rsi.status === "sobrevendido"
+                        ? "bg-green-100 text-green-700"
+                        : analysis.rsi.status === "sobrecomprado"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-neutral-100 text-neutral-500"
+                    }`}>
+                      {analysis.rsi.status}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-neutral-100 rounded-full mb-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        analysis.rsi.value <= 30
+                          ? "bg-green-500"
+                          : analysis.rsi.value >= 70
+                          ? "bg-red-500"
+                          : "bg-neutral-400"
+                      }`}
+                      style={{ width: analysis.rsi.value + "%" }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-neutral-400 mb-2">
+                    <span>0 — Sobrevendido</span>
+                    <span>Sobrecomprado — 100</span>
+                  </div>
+                  <p className="text-xs text-neutral-500 leading-relaxed">{analysis.rsi.description}</p>
+                </div>
+
                 <div className="border border-neutral-100 rounded-lg p-4">
                   <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Volumen</h3>
                   <p className="text-sm text-neutral-700 leading-relaxed">{analysis.volumeSignal}</p>

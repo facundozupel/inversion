@@ -13,11 +13,18 @@ export interface PatternResult {
   description: string;
 }
 
+export interface RsiData {
+  value: number;
+  status: "sobrevendido" | "neutral" | "sobrecomprado";
+  description: string;
+}
+
 export interface CandleAnalysis {
   trend: { direction: string; description: string };
   lastCandle: PatternResult;
   recentPatterns: PatternResult[];
   volumeSignal: string;
+  rsi: RsiData;
   summary: string;
   score: number;
   signal: "strong_buy" | "buy" | "hold" | "sell" | "strong_sell";
@@ -45,6 +52,60 @@ function lowerWick(c: Candle) {
 
 function isBullish(c: Candle) {
   return c.close > c.open;
+}
+
+function calculateRSI(candles: Candle[], period = 14): RsiData {
+  if (candles.length < period + 1) {
+    return { value: 50, status: "neutral", description: "Datos insuficientes para calcular RSI." };
+  }
+
+  let avgGain = 0;
+  let avgLoss = 0;
+
+  // Primer promedio
+  for (let i = 1; i <= period; i++) {
+    const change = candles[i].close - candles[i - 1].close;
+    if (change > 0) avgGain += change;
+    else avgLoss += Math.abs(change);
+  }
+  avgGain /= period;
+  avgLoss /= period;
+
+  // Suavizado exponencial
+  for (let i = period + 1; i < candles.length; i++) {
+    const change = candles[i].close - candles[i - 1].close;
+    if (change > 0) {
+      avgGain = (avgGain * (period - 1) + change) / period;
+      avgLoss = (avgLoss * (period - 1)) / period;
+    } else {
+      avgGain = (avgGain * (period - 1)) / period;
+      avgLoss = (avgLoss * (period - 1) + Math.abs(change)) / period;
+    }
+  }
+
+  const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+  const rsi = 100 - 100 / (1 + rs);
+  const value = Math.round(rsi * 10) / 10;
+
+  if (value <= 30) {
+    return {
+      value,
+      status: "sobrevendido",
+      description: "RSI en " + value + " — sobrevendido. El activo cayo demasiado y es probable un rebote. Oportunidad de compra.",
+    };
+  }
+  if (value >= 70) {
+    return {
+      value,
+      status: "sobrecomprado",
+      description: "RSI en " + value + " — sobrecomprado. El activo subio demasiado rapido y es probable una correccion. Considerar venta.",
+    };
+  }
+  return {
+    value,
+    status: "neutral",
+    description: "RSI en " + value + " — zona neutral. No hay senal de sobreventa ni sobrecompra.",
+  };
 }
 
 function detectSinglePattern(c: Candle): PatternResult {
@@ -179,6 +240,7 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
 
   const lastCandle = detectSinglePattern(last);
   const recentPatterns = detectMultiPatterns(candles.slice(-3));
+  const rsi = calculateRSI(candles);
 
   const avgVolume = recent.slice(0, -1).reduce((s, c) => s + c.volume, 0) / (recent.length - 1);
   const volRatio = last.volume / avgVolume;
@@ -217,6 +279,11 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
   const last5 = candles.slice(-5);
   const upCandles = last5.filter((c) => c.close > c.open).length;
   score += (upCandles - 2.5) * 6;
+
+  // RSI: sobrevendido suma puntos (oportunidad de rebote), sobrecomprado resta
+  if (rsi.status === "sobrevendido") score += 25;
+  else if (rsi.status === "sobrecomprado") score -= 25;
+
   score = Math.max(-100, Math.min(100, Math.round(score)));
 
   let signal: "strong_buy" | "buy" | "hold" | "sell" | "strong_sell";
@@ -235,24 +302,36 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
   const isDowntrend = trend.direction === "bajista";
   const isHighVol = volRatio > 1.2;
 
-  if (isBullishSignal && isUptrend && isHighVol) {
+  const isOversold = rsi.status === "sobrevendido";
+  const isOverbought = rsi.status === "sobrecomprado";
+
+  if (isOversold && (isBullishSignal || !isBearishSignal)) {
     action = "buy";
-    actionReason = "Patron alcista + tendencia alcista + volumen alto (" + volRatio.toFixed(1) + "x). Las tres condiciones se cumplen — senal de entrada.";
+    actionReason = "RSI en " + rsi.value + " (sobrevendido) — el activo cayo demasiado y es probable un rebote. Oportunidad de compra por sobreventa.";
+  } else if (isBullishSignal && isUptrend && isHighVol) {
+    action = "buy";
+    actionReason = "Patron alcista + tendencia alcista + volumen alto (" + volRatio.toFixed(1) + "x). RSI en " + rsi.value + ". Las condiciones se cumplen — senal de entrada.";
   } else if (isBullishSignal && isUptrend) {
     action = "buy";
-    actionReason = "Patron alcista + tendencia alcista confirmada, pero volumen promedio (" + volRatio.toFixed(1) + "x). Senal valida pero con menos conviccion.";
+    actionReason = "Patron alcista + tendencia alcista. RSI en " + rsi.value + ". Senal valida pero con volumen promedio (" + volRatio.toFixed(1) + "x).";
+  } else if (isOversold && isDowntrend) {
+    action = "buy";
+    actionReason = "RSI en " + rsi.value + " (sobrevendido) en tendencia bajista — posible piso. El activo esta castigado y podria rebotar. Entrada agresiva.";
+  } else if (isOverbought && isBearishSignal) {
+    action = "sell";
+    actionReason = "RSI en " + rsi.value + " (sobrecomprado) + senal bajista. El activo subio demasiado rapido — protege ganancias o espera correccion.";
   } else if (isBearishSignal && isDowntrend) {
     action = "sell";
-    actionReason = "Patron bajista + tendencia bajista. Si tenes esta posicion, considera vender — el impulso esta en contra.";
+    actionReason = "Patron bajista + tendencia bajista. RSI en " + rsi.value + ". Si tenes esta posicion, considera vender — el impulso esta en contra.";
   } else if (isBearishSignal && isUptrend) {
     action = "sell";
-    actionReason = "Senal de reversa bajista en tendencia alcista. La tendencia podria estar girando — protege tus ganancias.";
-  } else if (isBullishSignal && isDowntrend) {
+    actionReason = "Senal de reversa bajista en tendencia alcista. RSI en " + rsi.value + ". La tendencia podria estar girando — protege tus ganancias.";
+  } else if (isBullishSignal && isDowntrend && !isOversold) {
     action = "wait";
-    actionReason = "Vela alcista en tendencia bajista — posible reversa pero no confirmada. Espera a que la tendencia gire a alcista antes de entrar.";
+    actionReason = "Vela alcista en tendencia bajista pero RSI en " + rsi.value + " (no sobrevendido). Espera confirmacion de reversa antes de entrar.";
   } else {
     action = "wait";
-    actionReason = "Sin alineacion clara entre senales de velas, tendencia y volumen. Paciencia — espera un setup mas limpio.";
+    actionReason = "RSI en " + rsi.value + " — zona neutral. Sin alineacion clara entre senales, tendencia y RSI. Espera un setup mas limpio.";
   }
 
   // Target (+2%) y Stop Loss (-2%) desde el precio actual
@@ -260,5 +339,5 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
   const target = currentPrice * 1.02;
   const stopLoss = currentPrice * 0.98;
 
-  return { trend, lastCandle, recentPatterns, volumeSignal, summary, score, signal, action, actionReason, target, stopLoss };
+  return { trend, lastCandle, recentPatterns, volumeSignal, rsi, summary, score, signal, action, actionReason, target, stopLoss };
 }
