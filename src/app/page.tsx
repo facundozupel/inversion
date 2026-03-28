@@ -13,41 +13,41 @@ const Dashboard = dynamic(() => import("@/components/Dashboard"), {
   ),
 });
 
-const HowItWorks = dynamic(() => import("@/components/HowItWorks"), {
-  ssr: false,
-});
+const HowItWorks = dynamic(() => import("@/components/HowItWorks"), { ssr: false });
+const MyTrades = dynamic(() => import("@/components/MyTrades"), { ssr: false });
+
+const TABS = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "trades", label: "Mis Trades" },
+  { id: "how", label: "Como funciona" },
+] as const;
+
+type TabId = typeof TABS[number]["id"];
 
 export default function Home() {
-  const [tab, setTab] = useState<"dashboard" | "how">("dashboard");
+  const [tab, setTab] = useState<TabId>("dashboard");
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Tabs */}
         <div className="flex gap-1 mb-8 border-b border-neutral-100">
-          <button
-            onClick={() => setTab("dashboard")}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === "dashboard"
-                ? "border-neutral-900 text-neutral-900"
-                : "border-transparent text-neutral-400 hover:text-neutral-600"
-            }`}
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setTab("how")}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              tab === "how"
-                ? "border-neutral-900 text-neutral-900"
-                : "border-transparent text-neutral-400 hover:text-neutral-600"
-            }`}
-          >
-            Como funciona
-          </button>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                tab === t.id
+                  ? "border-neutral-900 text-neutral-900"
+                  : "border-transparent text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
         {tab === "dashboard" && <Dashboard />}
+        {tab === "trades" && <MyTrades />}
         {tab === "how" && <HowItWorks />}
       </div>
     </div>
