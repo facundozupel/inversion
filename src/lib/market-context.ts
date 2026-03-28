@@ -22,12 +22,27 @@ export interface EarningsEvent {
   isRedFlag: boolean;
 }
 
+export interface PutCallData {
+  ratio: number;
+  putVolume: number;
+  callVolume: number;
+  status: "miedo" | "neutral" | "codicia";
+  description: string;
+}
+
 export interface MarketContextData {
   indices: MarketIndex[];
   vix: VixData;
+  putCall: PutCallData | null;
   earnings: EarningsEvent[];
   safeToTrade: boolean;
   redFlags: string[];
+}
+
+export function computePutCallStatus(ratio: number): "miedo" | "neutral" | "codicia" {
+  if (ratio > 1.0) return "miedo";
+  if (ratio < 0.7) return "codicia";
+  return "neutral";
 }
 
 export function computeVixStatus(level: number): "normal" | "elevated" | "danger" {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   MarketIndex,
   VixData,
+  PutCallData,
   EarningsEvent,
   computeRedFlags,
   computeSafeToTrade,
@@ -18,6 +19,7 @@ interface Props {
 export default function MarketContext({ onEarningsLoaded }: Props) {
   const [indices, setIndices] = useState<MarketIndex[]>([]);
   const [vix, setVix] = useState<VixData | null>(null);
+  const [putCall, setPutCall] = useState<PutCallData | null>(null);
   const [earnings, setEarnings] = useState<EarningsEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +31,7 @@ export default function MarketContext({ onEarningsLoaded }: Props) {
       if (market) {
         setIndices(market.indices || []);
         setVix(market.vix || null);
+        setPutCall(market.putCall || null);
       }
       const earningsList: EarningsEvent[] = earningsData?.earnings || [];
       setEarnings(earningsList);
@@ -67,7 +70,7 @@ export default function MarketContext({ onEarningsLoaded }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Pulso del Mercado */}
           <div>
             <h3 className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-3">
@@ -135,6 +138,44 @@ export default function MarketContext({ onEarningsLoaded }: Props) {
                   {vix.status === "danger" ? "PELIGRO" : vix.status === "elevated" ? "ELEVADO" : "NORMAL"}
                 </span>
               </div>
+            )}
+          </div>
+
+          {/* Put/Call Ratio */}
+          <div>
+            <h3 className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+              Put/Call SPX (Institucional)
+            </h3>
+            {putCall ? (
+              <div>
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span
+                    className={`text-2xl font-light ${
+                      putCall.status === "miedo"
+                        ? "text-red-600"
+                        : putCall.status === "codicia"
+                        ? "text-amber-500"
+                        : "text-neutral-900"
+                    }`}
+                  >
+                    {putCall.ratio.toFixed(2)}
+                  </span>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                    putCall.status === "miedo"
+                      ? "bg-red-100 text-red-700"
+                      : putCall.status === "codicia"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {putCall.status === "miedo" ? "MIEDO" : putCall.status === "codicia" ? "CODICIA" : "NEUTRAL"}
+                </span>
+                <p className="text-[10px] text-neutral-400 mt-2 leading-relaxed">{putCall.description}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-neutral-300">Sin datos</p>
             )}
           </div>
 

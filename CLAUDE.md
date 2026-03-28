@@ -62,9 +62,10 @@ SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, JPM, V, DIS, BTC
 - **Patrones de velas:** Doji, Martillo, Estrella Fugaz, Envolvente, Harami, Marubozu, Trompo, Pinza, Estrella de la Manana/Vespertina
 - **Tendencia:** SMA 5 vs SMA 20 (>2% = alcista, <-2% = bajista)
 - **RSI:** 14 periodos con suavizado exponencial
-- **ATR:** 14 periodos para SL/TP dinamico
+- **ATR:** 14 periodos para SL/TP dinamico (ratio 1:2)
 - **Volumen:** ratio vs promedio 20 periodos
 - **Soporte/Resistencia:** min/max 20 periodos
+- **Put/Call Ratio SPX:** calculado en tiempo real desde ~27K opciones del CBOE. >1.0 = miedo, <0.7 = codicia
 
 ## Logica de decisiones
 
@@ -92,7 +93,7 @@ SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, JPM, V, DIS, BTC
 - Soporte y resistencia como referencia de niveles clave
 
 ## Limitaciones conocidas
-- No incluye flujo de opciones ni posicionamiento institucional (no hay API gratuita)
+- Flujo institucional limitado: tiene put/call SPX pero no dark pools, gamma exposure ni posicionamiento individual
 - No tiene backtesting ni historial de win rate
 - Soporte/resistencia basicos (min/max, no pivots ni fibonacci)
 - No considera fundamentales (earnings, revenue, P/E)

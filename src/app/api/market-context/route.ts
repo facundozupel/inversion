@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { computeVixStatus } from "@/lib/market-context";
+import { computeVixStatus, computePutCallStatus } from "@/lib/market-context";
 
 const INDICES = [
   { symbol: "^GSPC", name: "S&P 500" },
@@ -17,10 +17,54 @@ async function fetchQuote(symbol: string) {
   return json.chart?.result?.[0]?.meta ?? null;
 }
 
+async function fetchPutCallRatio() {
+  try {
+    const res = await fetch("https://cdn.cboe.com/api/global/delayed_quotes/options/_SPX.json", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const opts = json.data?.options || [];
+
+    let putVol = 0;
+    let callVol = 0;
+    for (const o of opts) {
+      const sym: string = o.option || "";
+      const vol: number = o.volume || 0;
+      let optType: string | null = null;
+      for (const ch of sym.slice(3)) {
+        if (ch === "C") { optType = "C"; break; }
+        if (ch === "P") { optType = "P"; break; }
+      }
+      if (optType === "P") putVol += vol;
+      else if (optType === "C") callVol += vol;
+    }
+
+    if (callVol === 0) return null;
+    const ratio = Math.round((putVol / callVol) * 1000) / 1000;
+    const status = computePutCallStatus(ratio);
+
+    let description: string;
+    if (status === "miedo") {
+      description = "Ratio " + ratio.toFixed(2) + " — mas puts que calls. Los institucionales se estan cubriendo. Sentimiento de miedo.";
+    } else if (status === "codicia") {
+      description = "Ratio " + ratio.toFixed(2) + " — mas calls que puts. Los institucionales apuestan al alza. Sentimiento de codicia (precaucion).";
+    } else {
+      description = "Ratio " + ratio.toFixed(2) + " — equilibrio entre puts y calls. Sentimiento neutral.";
+    }
+
+    return { ratio, putVolume: putVol, callVolume: callVol, status, description };
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const results = await Promise.allSettled([
     ...INDICES.map((i) => fetchQuote(i.symbol)),
     fetchQuote("^VIX"),
+    fetchPutCallRatio(),
   ]);
 
   const indices = INDICES.map((idx, i) => {
@@ -56,5 +100,8 @@ export async function GET() {
     status: computeVixStatus(vixLevel),
   };
 
-  return NextResponse.json({ indices, vix });
+  const putCallResult = results[INDICES.length + 1];
+  const putCall = putCallResult.status === "fulfilled" ? putCallResult.value : null;
+
+  return NextResponse.json({ indices, vix, putCall });
 }

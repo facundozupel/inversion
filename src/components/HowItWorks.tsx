@@ -241,6 +241,33 @@ export default function HowItWorks() {
         </div>
       </Section>
 
+      {/* Put/Call */}
+      <Section title="Put/Call Ratio SPX (sentimiento institucional)">
+        <p className="text-xs text-neutral-500 leading-relaxed mb-3">
+          Se calcula en tiempo real desde las opciones del S&P 500 (SPX) en el CBOE. Mide cuantas opciones de venta (puts) se operan vs opciones de compra (calls). Es un proxy del sentimiento de los grandes jugadores del mercado.
+        </p>
+        <div className="space-y-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-neutral-700">Ratio mayor a 1.0</span>
+            <span className="text-neutral-400 ml-auto">Miedo — institucionales cubriendose con puts</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-neutral-700">Ratio entre 0.7 y 1.0</span>
+            <span className="text-neutral-400 ml-auto">Neutral — equilibrio</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-neutral-700">Ratio menor a 0.7</span>
+            <span className="text-neutral-400 ml-auto">Codicia — exceso de apuestas alcistas (precaucion)</span>
+          </div>
+        </div>
+        <p className="text-xs text-neutral-400 mt-3">
+          Fuente: CBOE (Chicago Board Options Exchange) con datos delayed. Se calculan ~27,000 contratos de opciones SPX para obtener el ratio agregado por volumen.
+        </p>
+      </Section>
+
       {/* Contexto macro */}
       <Section title="Contexto del mercado (red flags)">
         <p className="text-xs text-neutral-500 leading-relaxed mb-3">
@@ -308,8 +335,8 @@ export default function HowItWorks() {
           <div className="flex items-start gap-2">
             <span className="text-neutral-400 mt-0.5">4.</span>
             <div>
-              <p className="font-medium text-neutral-700">Sin flujo institucional</p>
-              <p className="text-neutral-400">No tiene datos de opciones, dark pools ni posicionamiento de fondos. Esta informacion no esta disponible en APIs gratuitas.</p>
+              <p className="font-medium text-neutral-700">Flujo institucional limitado</p>
+              <p className="text-neutral-400">Usa el ratio put/call del SPX (CBOE) como proxy del sentimiento institucional. No tiene datos de dark pools, gamma exposure ni posicionamiento de fondos individuales.</p>
             </div>
           </div>
           <div className="flex items-start gap-2">

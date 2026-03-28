@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { analyzeCandles } from "@/lib/candle-patterns";
-import { computeVixStatus, computeSafeToTrade } from "@/lib/market-context";
+import { computeVixStatus, computeSafeToTrade, computePutCallStatus } from "@/lib/market-context";
 
 const STOCKS = [
   { symbol: "SPY", name: "S&P 500 ETF" },
@@ -75,7 +75,32 @@ async function fetchMarketContext() {
     status: computeVixStatus(vixLevel),
   };
 
-  return { indices, vix };
+  // Put/Call ratio
+  let putCall = null;
+  try {
+    const pcRes = await fetch("https://cdn.cboe.com/api/global/delayed_quotes/options/_SPX.json", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    if (pcRes.ok) {
+      const pcJson = await pcRes.json();
+      const opts = pcJson.data?.options || [];
+      let putVol = 0, callVol = 0;
+      for (const o of opts) {
+        const sym: string = o.option || "";
+        const vol: number = o.volume || 0;
+        for (const ch of sym.slice(3)) {
+          if (ch === "P") { putVol += vol; break; }
+          if (ch === "C") { callVol += vol; break; }
+        }
+      }
+      if (callVol > 0) {
+        const ratio = Math.round((putVol / callVol) * 1000) / 1000;
+        putCall = { ratio, putVolume: putVol, callVolume: callVol, status: computePutCallStatus(ratio) };
+      }
+    }
+  } catch { /* ignore */ }
+
+  return { indices, vix, putCall };
 }
 
 async function sendTelegram(text: string) {
@@ -110,6 +135,9 @@ export async function GET() {
     msg += `${idx.name}: ${idx.price.toFixed(2)} (${arrow}${idx.changePercent.toFixed(2)}%)\n`;
   }
   msg += `VIX: ${market.vix.level.toFixed(2)} — ${market.vix.status === "danger" ? "PELIGRO" : market.vix.status === "elevated" ? "ELEVADO" : "NORMAL"}\n`;
+  if (market.putCall) {
+    msg += `Put/Call SPX: ${market.putCall.ratio.toFixed(2)} — ${market.putCall.status === "miedo" ? "MIEDO (institucionales cubriendose)" : market.putCall.status === "codicia" ? "CODICIA (apuestas al alza)" : "NEUTRAL"}\n`;
+  }
   msg += `\n${safeToTrade ? "SEGURO PARA OPERAR" : "PRECAUCION — NO IDEAL PARA OPERAR"}\n\n`;
 
   // Analizar cada stock
