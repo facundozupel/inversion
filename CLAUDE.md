@@ -3,14 +3,15 @@
 # Proyecto: Inversion — Dashboard de Finanzas
 
 ## Que es
-Sistema de trading de rebotes y tendencias que analiza acciones, ETFs, crypto y forex.
-Combina dos estrategias (conservadora y agresiva) para dar un veredicto unificado sin contradicciones.
-Envia alertas diarias por Telegram con las oportunidades del dia.
+Sistema de analisis tecnico para trading diario que combina dos estrategias independientes
+(trend following + mean reversion) para dar un veredicto unificado sin contradicciones.
+Envia alertas diarias por Telegram a las 9:30 AM Chile.
 
 **URL produccion:** https://inversion.facundo.click
 **Repo:** https://github.com/facundozupel/inversion
 **Deploy:** Vercel (auto-deploy desde GitHub push a main)
 **Bot Telegram:** @Facundo_inversion_bot
+**Timeframe:** Diario (1D)
 
 ## Stack
 - Next.js 16 (App Router, TypeScript, Tailwind CSS 4)
@@ -22,13 +23,14 @@ Envia alertas diarias por Telegram con las oportunidades del dia.
 ## Arquitectura (Domain-Driven)
 
 ### Dominio: Analisis Tecnico (`src/lib/`)
-- `candle-patterns.ts` — Motor de analisis con dos estrategias:
-  - **Conservadora (trend following):** patrones de velas + tendencia (SMA 5 vs 20) + volumen
-  - **Agresiva (mean reversion):** RSI 14 periodos para detectar sobreventa/sobrecompra y rebotes
+- `candle-patterns.ts` — Motor de analisis:
+  - **Estrategia conservadora (trend following):** patrones de velas + tendencia (SMA 5 vs 20) + volumen
+  - **Estrategia agresiva (mean reversion):** RSI 14 periodos para detectar sobreventa/sobrecompra y rebotes
   - **Veredicto final:** combina ambas. Si coinciden = senal fuerte. Si se contradicen = ESPERAR (nunca dice comprar y vender al mismo tiempo)
-  - **RSI:** < 30 sobrevendido (oportunidad de rebote), > 70 sobrecomprado (correccion probable)
-  - **ATR (Average True Range):** SL = precio - 1.5*ATR, TP = precio + 2*ATR (dinamico segun volatilidad)
-  - Score: -100 a +100. Trend (±40) + velas (±30) + volumen (±15) + momentum (±15) + RSI (±25)
+  - **RSI 14:** < 30 sobrevendido (oportunidad de rebote), > 70 sobrecomprado (correccion probable)
+  - **ATR 14:** SL = precio - 1.5*ATR, TP = precio + 3*ATR. Ratio riesgo/beneficio 1:2
+  - **Soporte/Resistencia:** min/max de ultimos 20 periodos
+  - Score: -100 a +100. Trend (±40) + velas (±30) + RSI (±25) + volumen (±15) + momentum (±15)
 - `market-context.ts` — Contexto macro. VIX, indices, earnings, red flags, "seguro para operar"
 
 ### Dominio: Datos de Mercado (`src/app/api/`)
@@ -41,11 +43,12 @@ Envia alertas diarias por Telegram con las oportunidades del dia.
 - `Dashboard.tsx` — Componente principal:
   - Grilla de 17 activos con badges COMPRAR/VENDER/ESPERAR
   - Filtro "listos para operar" (solo muestra activos con senal de compra)
-  - Simulador de inversion en CLP
-  - Panel de analisis: veredicto, dos estrategias lado a lado, RSI con barra visual, target/SL con ATR, patrones, tendencia, volumen
+  - Simulador de inversion en CLP (ganancia/perdida calculada con ATR real)
+  - Panel de analisis: veredicto, dos estrategias lado a lado, soporte/resistencia, TP/SL con ratio, RSI con barra visual, patrones, tendencia, volumen
 - `CandlestickChart.tsx` — Lightweight Charts v5. Velas + volumen como histograma
 - `MarketContext.tsx` — Pulso del mercado, VIX, earnings, badge "seguro para operar", red flags
-- `page.tsx` — Carga Dashboard con `dynamic({ ssr: false })`
+- `HowItWorks.tsx` — Documentacion completa de la logica del sistema
+- `page.tsx` — Tabs (Dashboard / Como funciona) con `dynamic({ ssr: false })`
 
 ## Cron (Telegram)
 - `vercel.json` — Cron: `30 12 * * 1-5` (9:30 AM Chile, lunes a viernes)
@@ -55,15 +58,23 @@ Envia alertas diarias por Telegram con las oportunidades del dia.
 ## Activos trackeados
 SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, JPM, V, DIS, BTC-USD, ETH-USD, EURUSD=X
 
+## Indicadores tecnicos implementados
+- **Patrones de velas:** Doji, Martillo, Estrella Fugaz, Envolvente, Harami, Marubozu, Trompo, Pinza, Estrella de la Manana/Vespertina
+- **Tendencia:** SMA 5 vs SMA 20 (>2% = alcista, <-2% = bajista)
+- **RSI:** 14 periodos con suavizado exponencial
+- **ATR:** 14 periodos para SL/TP dinamico
+- **Volumen:** ratio vs promedio 20 periodos
+- **Soporte/Resistencia:** min/max 20 periodos
+
 ## Logica de decisiones
 
 ### Cuando COMPRAR
-- Ambas estrategias dicen comprar (senal fuerte)
+- Ambas estrategias dicen comprar (senal fuerte — tendencia + RSI alineados)
 - Conservadora dice comprar (tendencia a favor)
-- Agresiva dice comprar + conservadora dice esperar (compra especulativa, SL ajustado)
+- Agresiva dice comprar + conservadora dice esperar (compra especulativa por rebote, SL ajustado)
 
 ### Cuando ESPERAR
-- Las estrategias se contradicen (tendencia baja pero RSI sobrevendido)
+- Las estrategias se contradicen (tendencia baja pero RSI sobrevendido — conflicto)
 - Sin senal clara en ninguna estrategia
 
 ### Cuando VENDER
@@ -74,6 +85,19 @@ SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, JPM, V, DIS, BTC
 - S&P 500 y Nasdaq ambos rojos > 1.5%
 - Earnings del activo en <= 3 dias
 
+## Gestion de riesgo
+- TP = precio + 3 x ATR (take profit dinamico)
+- SL = precio - 1.5 x ATR (stop loss dinamico)
+- Ratio riesgo/beneficio minimo 1:2
+- Soporte y resistencia como referencia de niveles clave
+
+## Limitaciones conocidas
+- No incluye flujo de opciones ni posicionamiento institucional (no hay API gratuita)
+- No tiene backtesting ni historial de win rate
+- Soporte/resistencia basicos (min/max, no pivots ni fibonacci)
+- No considera fundamentales (earnings, revenue, P/E)
+- Timeframe unico (diario) — no hay analisis multi-timeframe
+
 ## Variables de entorno (en .env.local y Vercel)
 - `TELEGRAM_BOT_TOKEN` — Token del bot (@Facundo_inversion_bot). NO commitear
 - `TELEGRAM_CHAT_ID` — Chat ID del usuario (5570695337)
@@ -82,8 +106,8 @@ SPY, QQQ, AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, JPM, V, DIS, BTC
 Todo en espanol (Chile). Fechas en formato es-CL. Patrones de velas traducidos.
 
 ## Convenciones
-- Sin emojis en codigo a menos que se pida explicitamente (excepto favicon 💸)
-- Diseño minimalista blanco
+- Sin emojis en codigo a menos que se pida explicitamente (excepto favicon)
+- Diseno minimalista blanco
 - API routes sin autenticacion (datos publicos de Yahoo Finance)
 - `ssr: false` en page.tsx para evitar hydration mismatch
 - Commit messages en espanol con Co-Authored-By de Claude

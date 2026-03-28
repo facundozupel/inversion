@@ -32,11 +32,14 @@ export default function HowItWorks() {
       </div>
 
       {/* Flujo general */}
-      <Section title="Flujo de datos">
-        <Step number={1} title="Obtencion de datos" description="Se consulta Yahoo Finance para obtener precios historicos (Open, High, Low, Close, Volume) de cada activo. Tambien se obtienen S&P 500, Nasdaq y VIX para el contexto del mercado." />
-        <Step number={2} title="Analisis tecnico" description="Cada activo se analiza con patrones de velas, tendencia (SMA), RSI y volumen. Se generan dos estrategias independientes: conservadora y agresiva." />
-        <Step number={3} title="Veredicto" description="Se combinan ambas estrategias. Si coinciden, la senal es fuerte. Si se contradicen, el sistema dice ESPERAR — nunca da senales contradictorias." />
-        <Step number={4} title="Contexto macro" description="Antes de operar, se verifica el VIX (indice de miedo) y el estado de los indices. Si el mercado esta en peligro, se bloquea la operacion." />
+      <Section title="Flujo de datos (paso a paso)">
+        <Step number={1} title="Obtencion de datos (Yahoo Finance)" description="Se consultan precios historicos OHLCV (Open, High, Low, Close, Volume) de 17 activos en timeframe diario (1D). Tambien S&P 500, Nasdaq y VIX para contexto macro. Datos gratuitos, sin API key." />
+        <Step number={2} title="Contexto macro" description="Se verifica VIX (indice de miedo), estado de indices y calendario de earnings. Si VIX >= 30 o ambos indices rojos > 1.5%, se marca como NO SEGURO PARA OPERAR." />
+        <Step number={3} title="Analisis tecnico por activo" description="Cada activo se analiza con 6 indicadores: patrones de velas, tendencia (SMA 5 vs 20), RSI (14 periodos), ATR (volatilidad), volumen relativo, y soporte/resistencia (min/max 20 periodos)." />
+        <Step number={4} title="Dos estrategias independientes" description="Conservadora: sigue la tendencia (compra si alcista + patron alcista + volumen). Agresiva: busca rebotes (compra si RSI < 30, sobrevendido)." />
+        <Step number={5} title="Veredicto unificado" description="Se combinan ambas estrategias. Si coinciden = senal fuerte. Si se contradicen = ESPERAR. Nunca da senales contradictorias (ej: comprar y vender al mismo tiempo)." />
+        <Step number={6} title="Gestion de riesgo" description="Se calcula TP (3x ATR) y SL (1.5x ATR) para ratio minimo 1:2. Soporte y resistencia como referencia de niveles clave." />
+        <Step number={7} title="Alerta Telegram" description="Lunes a viernes a las 9:30 AM Chile, se envia automaticamente el reporte con oportunidades, targets y contexto." />
       </Section>
 
       {/* Patrones de velas */}
@@ -273,6 +276,83 @@ export default function HowItWorks() {
         <p className="text-xs text-neutral-500 leading-relaxed">
           Cada dia de lunes a viernes a las 9:30 AM (hora Chile), el sistema analiza automaticamente todos los activos y envia un reporte por Telegram con: contexto del mercado, activos para comprar con target y stop loss, activos para vender, y activos en espera. Si ningun activo cumple las condiciones, el mensaje indica que no hay oportunidades y recomienda no operar.
         </p>
+      </Section>
+
+      {/* Limitaciones */}
+      <Section title="Limitaciones del sistema (transparencia)">
+        <p className="text-xs text-neutral-500 leading-relaxed mb-3">
+          Este sistema tiene limitaciones que debes conocer antes de operar:
+        </p>
+        <div className="space-y-2 text-xs">
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">1.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Sin backtesting ni win rate</p>
+              <p className="text-neutral-400">No hay registro historico de cuantas senales fueron correctas. Las senales se basan en patrones estadisticos pero no hay evidencia de rendimiento pasado.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">2.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Timeframe unico (diario)</p>
+              <p className="text-neutral-400">Solo analiza velas diarias. Un patron en diario puede contradecir lo que pasa en 4 horas o semanal. No hay analisis multi-timeframe.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">3.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Sin analisis fundamental</p>
+              <p className="text-neutral-400">No considera revenue, P/E ratio, deuda, ni noticias de la empresa. Solo mira el precio y volumen.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">4.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Sin flujo institucional</p>
+              <p className="text-neutral-400">No tiene datos de opciones, dark pools ni posicionamiento de fondos. Esta informacion no esta disponible en APIs gratuitas.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">5.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Soporte/resistencia basicos</p>
+              <p className="text-neutral-400">Usa min/max de 20 periodos. No calcula pivots, fibonacci ni zonas de liquidez.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-neutral-400 mt-0.5">6.</span>
+            <div>
+              <p className="font-medium text-neutral-700">Datos de Yahoo Finance</p>
+              <p className="text-neutral-400">Yahoo Finance no es un feed oficial. Puede tener retrasos de hasta 15 minutos y ocasionalmente datos incorrectos.</p>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Para que sirve y para que no */}
+      <Section title="Para que sirve y para que no">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="border border-green-100 rounded-lg p-3 bg-green-50/30">
+            <p className="text-xs font-semibold text-green-700 mb-2">Sirve para</p>
+            <ul className="text-xs text-neutral-500 space-y-1">
+              <li>Filtro rapido de oportunidades diarias</li>
+              <li>Detectar activos sobrevendidos (rebotes)</li>
+              <li>Tener TP/SL calculados antes de operar</li>
+              <li>Saber si hoy es buen dia para operar (VIX)</li>
+              <li>Aprender analisis tecnico visual</li>
+            </ul>
+          </div>
+          <div className="border border-red-100 rounded-lg p-3 bg-red-50/30">
+            <p className="text-xs font-semibold text-red-700 mb-2">NO sirve para</p>
+            <ul className="text-xs text-neutral-500 space-y-1">
+              <li>Reemplazar analisis profesional</li>
+              <li>Operar a ciegas sin otra fuente</li>
+              <li>Trading intradía (timeframe diario)</li>
+              <li>Evaluar la salud financiera de una empresa</li>
+              <li>Garantizar ganancias</li>
+            </ul>
+          </div>
+        </div>
       </Section>
 
       {/* Disclaimer */}
