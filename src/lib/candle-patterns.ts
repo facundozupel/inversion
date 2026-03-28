@@ -40,6 +40,10 @@ export interface CandleAnalysis {
   target: number;
   stopLoss: number;
   atr: number;
+  support: number;
+  resistance: number;
+  timeframe: string;
+  riskReward: string;
 }
 
 function bodySize(c: Candle) {
@@ -376,11 +380,22 @@ export function analyzeCandles(candles: Candle[]): CandleAnalysis | null {
     actionReason = "Sin senal clara en ninguna estrategia. Paciencia — esperar un setup definido.";
   }
 
-  // ATR para SL/TP dinamico
+  // ATR para SL/TP dinamico (ratio 1:2)
   const atr = calculateATR(candles);
   const currentPrice = last.close;
-  const target = atr > 0 ? currentPrice + atr * 2 : currentPrice * 1.02;
-  const stopLoss = atr > 0 ? currentPrice - atr * 1.5 : currentPrice * 0.98;
+  const target = atr > 0 ? currentPrice + atr * 3 : currentPrice * 1.03;
+  const stopLoss = atr > 0 ? currentPrice - atr * 1.5 : currentPrice * 0.985;
 
-  return { trend, lastCandle, recentPatterns, volumeSignal, rsi, summary, score, signal, conservative, aggressive, action, actionReason, target, stopLoss, atr };
+  // Ratio riesgo/beneficio
+  const risk = currentPrice - stopLoss;
+  const reward = target - currentPrice;
+  const riskReward = risk > 0 ? "1:" + (reward / risk).toFixed(1) : "1:2";
+
+  // Soporte y resistencia (min/max ultimos 20 periodos)
+  const support = Math.min(...recent.map((c) => c.low));
+  const resistance = Math.max(...recent.map((c) => c.high));
+
+  const timeframe = "Diario (1D)";
+
+  return { trend, lastCandle, recentPatterns, volumeSignal, rsi, summary, score, signal, conservative, aggressive, action, actionReason, target, stopLoss, atr, support, resistance, timeframe, riskReward };
 }

@@ -436,10 +436,16 @@ export default function Dashboard() {
                 </div>
 
                 {/* Target y Stop Loss */}
+                {/* Soporte y Resistencia */}
                 <div className="border border-neutral-100 rounded-lg p-4">
-                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Objetivo y Stop Loss</h3>
-                  <p className="text-[10px] text-neutral-300 mb-3">{"Basado en ATR (volatilidad real: $" + (analysis.atr < 10 ? analysis.atr.toFixed(4) : analysis.atr.toFixed(2)) + ")"}</p>
+                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Niveles Clave (20 periodos)</h3>
                   <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-red-500">Resistencia</span>
+                      <span className="text-sm font-medium text-red-500">
+                        {analysis.resistance < 10 ? analysis.resistance.toFixed(4) : analysis.resistance.toFixed(2)}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-neutral-500">Precio actual</span>
                       <span className="text-sm font-medium text-neutral-900">
@@ -447,37 +453,56 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-green-600">Vender en (TP)</span>
+                      <span className="text-xs text-green-600">Soporte</span>
+                      <span className="text-sm font-medium text-green-600">
+                        {analysis.support < 10 ? analysis.support.toFixed(4) : analysis.support.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TP / SL */}
+                <div className="border border-neutral-100 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">TP / SL</h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-100 text-neutral-500 font-medium">
+                      {"Ratio " + analysis.riskReward}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-neutral-300 mb-3">
+                    {"ATR: $" + (analysis.atr < 10 ? analysis.atr.toFixed(4) : analysis.atr.toFixed(2)) + " | " + analysis.timeframe}
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-green-600">Take Profit (3x ATR)</span>
                       <span className="text-sm font-medium text-green-600">
                         {analysis.target < 10 ? analysis.target.toFixed(4) : analysis.target.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-red-500">Cortar perdida (SL)</span>
+                      <span className="text-xs text-red-500">Stop Loss (1.5x ATR)</span>
                       <span className="text-sm font-medium text-red-500">
                         {analysis.stopLoss < 10 ? analysis.stopLoss.toFixed(4) : analysis.stopLoss.toFixed(2)}
                       </span>
                     </div>
-                    {investNum > 0 && (
-                      <>
-                        <div className="border-t border-neutral-100 pt-2 mt-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-neutral-400">{"Si invertis $" + investNum.toLocaleString() + " CLP"}</span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-xs text-green-600">Ganancia objetivo</span>
-                            <span className="text-sm font-medium text-green-600">
-                              {"$" + Math.round(investNum * 0.02).toLocaleString() + " CLP"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-xs text-red-500">Perdida maxima</span>
-                            <span className="text-sm font-medium text-red-500">
-                              {"-$" + Math.round(investNum * 0.02).toLocaleString() + " CLP"}
-                            </span>
-                          </div>
+                    {investNum > 0 && lastCandle && (
+                      <div className="border-t border-neutral-100 pt-2 mt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-neutral-400">{"Si invertis $" + investNum.toLocaleString() + " CLP"}</span>
                         </div>
-                      </>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-green-600">Ganancia objetivo</span>
+                          <span className="text-sm font-medium text-green-600">
+                            {"$" + Math.round(investNum * ((analysis.target - lastCandle.close) / lastCandle.close)).toLocaleString() + " CLP"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-red-500">Perdida maxima</span>
+                          <span className="text-sm font-medium text-red-500">
+                            {"-$" + Math.round(investNum * ((lastCandle.close - analysis.stopLoss) / lastCandle.close)).toLocaleString() + " CLP"}
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

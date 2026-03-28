@@ -199,16 +199,43 @@ export default function HowItWorks() {
         <div className="space-y-1.5 text-xs">
           <div className="flex justify-between">
             <span className="text-green-600">Take Profit (TP)</span>
-            <span className="text-neutral-400">Precio actual + 2 x ATR</span>
+            <span className="text-neutral-400">Precio actual + 3 x ATR</span>
           </div>
           <div className="flex justify-between">
             <span className="text-red-500">Stop Loss (SL)</span>
             <span className="text-neutral-400">Precio actual - 1.5 x ATR</span>
           </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-neutral-700">Ratio riesgo/beneficio</span>
+            <span className="text-neutral-400">1:2 (por cada $1 arriesgado, buscas ganar $2)</span>
+          </div>
         </div>
         <p className="text-xs text-neutral-400 mt-3">
-          Ejemplo: si TSLA tiene ATR de $15 y el precio es $360, el TP seria $390 y el SL $337.50. En cambio SPY con ATR de $5 y precio $630 tendria TP $640 y SL $622.50. El riesgo se adapta a cada activo.
+          Ejemplo: si TSLA tiene ATR de $15 y el precio es $360, el TP seria $405 (+$45) y el SL $337.50 (-$22.50). Ratio 1:2 — arriesgas $22.50 para ganar $45.
         </p>
+      </Section>
+
+      {/* Soporte y Resistencia */}
+      <Section title="Soporte y Resistencia">
+        <p className="text-xs text-neutral-500 leading-relaxed mb-3">
+          Se calculan como el minimo y maximo de los ultimos 20 periodos. Son niveles donde el precio historicamente reboto o fue rechazado.
+        </p>
+        <div className="space-y-2 text-xs">
+          <div className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 mt-1" />
+            <div>
+              <p className="font-medium text-neutral-700">Soporte (minimo de 20 periodos)</p>
+              <p className="text-neutral-400">Nivel donde los compradores tienden a entrar. Si el precio se acerca al soporte y rebota, es senal alcista.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 mt-1" />
+            <div>
+              <p className="font-medium text-neutral-700">Resistencia (maximo de 20 periodos)</p>
+              <p className="text-neutral-400">Nivel donde los vendedores tienden a vender. Si el precio se acerca a la resistencia y es rechazado, es senal bajista.</p>
+            </div>
+          </div>
+        </div>
       </Section>
 
       {/* Contexto macro */}
