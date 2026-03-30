@@ -31,25 +31,77 @@ interface StockSummary {
   loading: boolean;
 }
 
-const STOCKS = [
-  { symbol: "SPY", name: "S&P 500 ETF" },
-  { symbol: "QQQ", name: "Nasdaq ETF" },
-  { symbol: "AAPL", name: "Apple" },
-  { symbol: "MSFT", name: "Microsoft" },
-  { symbol: "GOOGL", name: "Google" },
-  { symbol: "AMZN", name: "Amazon" },
-  { symbol: "TSLA", name: "Tesla" },
-  { symbol: "NVDA", name: "NVIDIA" },
-  { symbol: "META", name: "Meta" },
-  { symbol: "NFLX", name: "Netflix" },
-  { symbol: "AMD", name: "AMD" },
-  { symbol: "JPM", name: "JPMorgan" },
-  { symbol: "V", name: "Visa" },
-  { symbol: "DIS", name: "Disney" },
-  { symbol: "BTC-USD", name: "Bitcoin" },
-  { symbol: "ETH-USD", name: "Ethereum" },
-  { symbol: "EURUSD=X", name: "EUR/USD" },
+const STOCK_CATEGORIES = [
+  {
+    category: "Indices / ETFs",
+    stocks: [
+      { symbol: "SPY", name: "S&P 500 ETF" },
+      { symbol: "QQQ", name: "Nasdaq ETF" },
+    ],
+  },
+  {
+    category: "Big Tech",
+    stocks: [
+      { symbol: "AAPL", name: "Apple" },
+      { symbol: "MSFT", name: "Microsoft" },
+      { symbol: "GOOGL", name: "Google" },
+      { symbol: "AMZN", name: "Amazon" },
+      { symbol: "META", name: "Meta" },
+      { symbol: "TSLA", name: "Tesla" },
+      { symbol: "NFLX", name: "Netflix" },
+    ],
+  },
+  {
+    category: "Semiconductores",
+    stocks: [
+      { symbol: "NVDA", name: "NVIDIA" },
+      { symbol: "AMD", name: "AMD" },
+      { symbol: "AVGO", name: "Broadcom" },
+      { symbol: "TSM", name: "TSMC" },
+      { symbol: "ARM", name: "ARM Holdings" },
+      { symbol: "INTC", name: "Intel" },
+      { symbol: "QCOM", name: "Qualcomm" },
+      { symbol: "MU", name: "Micron" },
+      { symbol: "MRVL", name: "Marvell" },
+      { symbol: "SMCI", name: "Super Micro" },
+    ],
+  },
+  {
+    category: "Tech / Software",
+    stocks: [
+      { symbol: "CRM", name: "Salesforce" },
+      { symbol: "PLTR", name: "Palantir" },
+    ],
+  },
+  {
+    category: "Salud / Pharma",
+    stocks: [
+      { symbol: "LLY", name: "Eli Lilly" },
+      { symbol: "UNH", name: "UnitedHealth" },
+      { symbol: "PFE", name: "Pfizer" },
+      { symbol: "ABBV", name: "AbbVie" },
+      { symbol: "MRNA", name: "Moderna" },
+    ],
+  },
+  {
+    category: "Finanzas / Otros",
+    stocks: [
+      { symbol: "JPM", name: "JPMorgan" },
+      { symbol: "V", name: "Visa" },
+      { symbol: "DIS", name: "Disney" },
+    ],
+  },
+  {
+    category: "Crypto / Forex",
+    stocks: [
+      { symbol: "BTC-USD", name: "Bitcoin" },
+      { symbol: "ETH-USD", name: "Ethereum" },
+      { symbol: "EURUSD=X", name: "EUR/USD" },
+    ],
+  },
 ];
+
+const STOCKS = STOCK_CATEGORIES.flatMap((cat) => cat.stocks);
 
 const RANGES = [
   { label: "1M", value: "1mo", interval: "1d" },
@@ -255,60 +307,75 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stock Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
-        {filteredSummaries.map((s) => (
-          <button
-            key={s.symbol}
-            onClick={() => handleSelect(s.symbol)}
-            className={`text-left p-4 rounded-lg border transition-all hover:shadow-sm ${
-              selected === s.symbol
-                ? "border-neutral-900 bg-neutral-50"
-                : "border-neutral-100 hover:border-neutral-200"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <span className="text-sm font-semibold text-neutral-900">{s.symbol}</span>
-                <span className="text-xs text-neutral-400 ml-2">{s.name}</span>
+      {/* Stock Grid by Category */}
+      <div className="space-y-8 mb-10">
+        {STOCK_CATEGORIES.map((cat) => {
+          const catSymbols = cat.stocks.map((s) => s.symbol);
+          const catSummaries = filteredSummaries.filter((s) => catSymbols.includes(s.symbol));
+          if (catSummaries.length === 0) return null;
+          return (
+            <div key={cat.category}>
+              <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+                {cat.category}
+                <span className="ml-2 text-neutral-300 font-normal">{catSummaries.length}</span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {catSummaries.map((s) => (
+                  <button
+                    key={s.symbol}
+                    onClick={() => handleSelect(s.symbol)}
+                    className={`text-left p-4 rounded-lg border transition-all hover:shadow-sm ${
+                      selected === s.symbol
+                        ? "border-neutral-900 bg-neutral-50"
+                        : "border-neutral-100 hover:border-neutral-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <span className="text-sm font-semibold text-neutral-900">{s.symbol}</span>
+                        <span className="text-xs text-neutral-400 ml-2">{s.name}</span>
+                      </div>
+                      {s.loading ? (
+                        <span className="text-xs text-neutral-300">...</span>
+                      ) : s.analysis ? (
+                        <div className="flex items-center gap-2">
+                          {earningsFlags[s.symbol] && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                              {"Ganancias " + earningsFlags[s.symbol].daysUntil + "d"}
+                            </span>
+                          )}
+                          <ActionBadge action={earningsFlags[s.symbol] && s.analysis.action === "buy" ? "wait" : s.analysis.action} />
+                          <SignalBadge signal={s.analysis.signal} score={s.analysis.score} />
+                        </div>
+                      ) : null}
+                    </div>
+                    {!s.loading && s.price > 0 && (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-light text-neutral-800">
+                          {s.price < 10 ? s.price.toFixed(4) : s.price.toFixed(2)}
+                        </span>
+                        <span
+                          className={`text-xs font-medium ${
+                            s.change >= 0 ? "text-green-600" : "text-red-500"
+                          }`}
+                        >
+                          {s.change >= 0 ? "+" : ""}{s.change.toFixed(2)}%
+                        </span>
+                        {s.analysis && (
+                          <span className="text-xs text-neutral-400 ml-auto">
+                            {s.analysis.trend.direction}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                ))}
               </div>
-              {s.loading ? (
-                <span className="text-xs text-neutral-300">...</span>
-              ) : s.analysis ? (
-                <div className="flex items-center gap-2">
-                  {earningsFlags[s.symbol] && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">
-                      {"Ganancias " + earningsFlags[s.symbol].daysUntil + "d"}
-                    </span>
-                  )}
-                  <ActionBadge action={earningsFlags[s.symbol] && s.analysis.action === "buy" ? "wait" : s.analysis.action} />
-                  <SignalBadge signal={s.analysis.signal} score={s.analysis.score} />
-                </div>
-              ) : null}
             </div>
-            {!s.loading && s.price > 0 && (
-              <div className="flex items-baseline gap-2">
-                <span className="text-lg font-light text-neutral-800">
-                  {s.price < 10 ? s.price.toFixed(4) : s.price.toFixed(2)}
-                </span>
-                <span
-                  className={`text-xs font-medium ${
-                    s.change >= 0 ? "text-green-600" : "text-red-500"
-                  }`}
-                >
-                  {s.change >= 0 ? "+" : ""}{s.change.toFixed(2)}%
-                </span>
-                {s.analysis && (
-                  <span className="text-xs text-neutral-400 ml-auto">
-                    {s.analysis.trend.direction}
-                  </span>
-                )}
-              </div>
-            )}
-          </button>
-        ))}
+          );
+        })}
         {showOnlyReady && filteredSummaries.length === 0 && (
-          <div className="col-span-full text-center py-8 text-neutral-300 text-sm">
+          <div className="text-center py-8 text-neutral-300 text-sm">
             Ningun activo cumple todas las condiciones hoy. Mejor no operar.
           </div>
         )}
@@ -325,10 +392,14 @@ export default function Dashboard() {
                      focus:outline-none focus:border-neutral-400 transition-colors"
         >
           <option value="" disabled>Seleccionar activo...</option>
-          {STOCKS.map((s) => (
-            <option key={s.symbol} value={s.symbol}>
-              {s.symbol} — {s.name}
-            </option>
+          {STOCK_CATEGORIES.map((cat) => (
+            <optgroup key={cat.category} label={cat.category}>
+              {cat.stocks.map((s) => (
+                <option key={s.symbol} value={s.symbol}>
+                  {s.symbol} — {s.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
 

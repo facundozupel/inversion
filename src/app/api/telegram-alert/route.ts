@@ -3,20 +3,42 @@ import { analyzeCandles } from "@/lib/candle-patterns";
 import { computeVixStatus, computeSafeToTrade, computePutCallStatus } from "@/lib/market-context";
 
 const STOCKS = [
+  // Indices / ETFs
   { symbol: "SPY", name: "S&P 500 ETF" },
   { symbol: "QQQ", name: "Nasdaq ETF" },
+  // Big Tech
   { symbol: "AAPL", name: "Apple" },
   { symbol: "MSFT", name: "Microsoft" },
   { symbol: "GOOGL", name: "Google" },
   { symbol: "AMZN", name: "Amazon" },
-  { symbol: "TSLA", name: "Tesla" },
-  { symbol: "NVDA", name: "NVIDIA" },
   { symbol: "META", name: "Meta" },
+  { symbol: "TSLA", name: "Tesla" },
   { symbol: "NFLX", name: "Netflix" },
+  // Semiconductores
+  { symbol: "NVDA", name: "NVIDIA" },
   { symbol: "AMD", name: "AMD" },
+  { symbol: "AVGO", name: "Broadcom" },
+  { symbol: "TSM", name: "TSMC" },
+  { symbol: "ARM", name: "ARM Holdings" },
+  { symbol: "INTC", name: "Intel" },
+  { symbol: "QCOM", name: "Qualcomm" },
+  { symbol: "MU", name: "Micron" },
+  { symbol: "MRVL", name: "Marvell" },
+  { symbol: "SMCI", name: "Super Micro" },
+  // Tech / Software
+  { symbol: "CRM", name: "Salesforce" },
+  { symbol: "PLTR", name: "Palantir" },
+  // Salud / Pharma
+  { symbol: "LLY", name: "Eli Lilly" },
+  { symbol: "UNH", name: "UnitedHealth" },
+  { symbol: "PFE", name: "Pfizer" },
+  { symbol: "ABBV", name: "AbbVie" },
+  { symbol: "MRNA", name: "Moderna" },
+  // Finanzas / Otros
   { symbol: "JPM", name: "JPMorgan" },
   { symbol: "V", name: "Visa" },
   { symbol: "DIS", name: "Disney" },
+  // Crypto
   { symbol: "BTC-USD", name: "Bitcoin" },
   { symbol: "ETH-USD", name: "Ethereum" },
 ];
