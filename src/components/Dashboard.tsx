@@ -99,6 +99,12 @@ const STOCK_CATEGORIES = [
       { symbol: "EURUSD=X", name: "EUR/USD" },
     ],
   },
+  {
+    category: "Chile",
+    stocks: [
+      { symbol: "LTM.SN", name: "LATAM Airlines (CLP)" },
+    ],
+  },
 ];
 
 const STOCKS = STOCK_CATEGORIES.flatMap((cat) => cat.stocks);

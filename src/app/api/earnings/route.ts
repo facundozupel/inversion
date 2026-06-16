@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SKIP_SYMBOLS = new Set(["BTC-USD", "ETH-USD", "EURUSD=X"]);
+const SKIP_SYMBOLS = new Set(["BTC-USD", "ETH-USD", "EURUSD=X", "LTM.SN"]);
 
 async function fetchEarningsDate(symbol: string): Promise<{ symbol: string; earningsDate: number | null }> {
   try {

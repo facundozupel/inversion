@@ -41,6 +41,8 @@ const STOCKS = [
   // Crypto
   { symbol: "BTC-USD", name: "Bitcoin" },
   { symbol: "ETH-USD", name: "Ethereum" },
+  // Chile
+  { symbol: "LTM.SN", name: "LATAM Airlines (CLP)" },
 ];
 
 async function fetchChart(symbol: string) {

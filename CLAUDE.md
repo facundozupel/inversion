@@ -63,11 +63,11 @@ Envia alertas diarias por Telegram a las 9:30 AM Chile.
 
 ## Cron (Telegram)
 - `vercel.json` — Cron: `30 12 * * 1-5` (9:30 AM Chile, lunes a viernes)
-- Ejecuta `/api/telegram-alert` que analiza los 32 activos y manda reporte al chat del usuario
+- Ejecuta `/api/telegram-alert` que analiza los 33 activos y manda reporte al chat del usuario
 - Incluye: contexto macro, VIX, put/call SPX, senales COMPRAR/VENDER/ESPERAR con RSI y targets
 - Plan gratuito de Vercel: 1 ejecucion/dia (suficiente para alerta matutina)
 
-## Activos trackeados (32 activos en 7 categorias)
+## Activos trackeados (33 activos en 8 categorias)
 - **Indices/ETFs:** SPY, QQQ
 - **Big Tech:** AAPL, MSFT, GOOGL, AMZN, META, TSLA, NFLX
 - **Semiconductores:** NVDA, AMD, AVGO, TSM, ARM, INTC, QCOM, MU, MRVL, SMCI
@@ -75,6 +75,7 @@ Envia alertas diarias por Telegram a las 9:30 AM Chile.
 - **Salud/Pharma:** LLY, UNH, PFE, ABBV, MRNA
 - **Finanzas/Otros:** JPM, V, DIS
 - **Crypto/Forex:** BTC-USD, ETH-USD, EURUSD=X
+- **Chile:** LTM.SN (LATAM Airlines, cotiza en CLP)
 
 ## Indicadores tecnicos implementados
 - **Patrones de velas:** Doji, Martillo, Estrella Fugaz, Envolvente, Harami, Marubozu, Trompo, Pinza, Estrella de la Manana/Vespertina
