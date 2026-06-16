@@ -583,7 +583,12 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
 
+          {analysis && (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 <div className="border border-neutral-100 rounded-lg p-4">
                   <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Lectura</h3>
                   <p className="text-sm text-neutral-700 leading-relaxed">{analysis.summary}</p>
@@ -673,9 +678,8 @@ export default function Dashboard() {
                   <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Volumen</h3>
                   <p className="text-sm text-neutral-700 leading-relaxed">{analysis.volumeSignal}</p>
                 </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </>
       )}
 
