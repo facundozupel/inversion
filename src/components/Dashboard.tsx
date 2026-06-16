@@ -33,6 +33,12 @@ interface StockSummary {
 
 const STOCK_CATEGORIES = [
   {
+    category: "Chile",
+    stocks: [
+      { symbol: "LTM.SN", name: "LATAM Airlines (CLP)" },
+    ],
+  },
+  {
     category: "Indices / ETFs",
     stocks: [
       { symbol: "SPY", name: "S&P 500 ETF" },
@@ -97,12 +103,6 @@ const STOCK_CATEGORIES = [
       { symbol: "BTC-USD", name: "Bitcoin" },
       { symbol: "ETH-USD", name: "Ethereum" },
       { symbol: "EURUSD=X", name: "EUR/USD" },
-    ],
-  },
-  {
-    category: "Chile",
-    stocks: [
-      { symbol: "LTM.SN", name: "LATAM Airlines (CLP)" },
     ],
   },
 ];
@@ -199,6 +199,13 @@ export default function Dashboard() {
         );
       }
     });
+  }, []);
+
+  // Carga LTM por defecto en el grafico principal al abrir
+  useEffect(() => {
+    setSelected("LTM.SN");
+    fetchChart("LTM.SN", "6mo");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchChart = useCallback(async (symbol: string, range: string) => {
