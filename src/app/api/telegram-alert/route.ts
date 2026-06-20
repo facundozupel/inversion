@@ -127,6 +127,38 @@ async function fetchMarketContext() {
   return { indices, vix, putCall };
 }
 
+// Resumen narrativo con GLM-5.1 (z.ai). Si falla, el reporte sale igual sin resumen.
+async function generateSummary(data: string): Promise<string | null> {
+  const key = process.env.ZAI_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch("https://api.z.ai/api/paas/v4/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "glm-5.1",
+        thinking: { type: "disabled" },
+        temperature: 0.6,
+        max_tokens: 220,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Eres un analista de trading chileno. Escribe un resumen ejecutivo de 2-3 frases en espanol (Chile), directo y sin emojis, sobre el estado del mercado y las senales del dia. No inventes datos: usa solo lo que recibes.",
+          },
+          { role: "user", content: data },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content?.trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 async function sendTelegram(text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -187,6 +219,18 @@ export async function GET() {
     } else {
       waitSignals.push(`${stock.symbol} — $${price}`);
     }
+  }
+
+  // Resumen IA (GLM-5.1) — se inserta despues del header
+  const resumen = await generateSummary(
+    `Mercado: ${market.indices.map((i) => `${i.name} ${i.changePercent.toFixed(2)}%`).join(", ")}. ` +
+      `VIX ${market.vix.level.toFixed(2)} (${market.vix.status}). ` +
+      (market.putCall ? `Put/Call SPX ${market.putCall.ratio.toFixed(2)} (${market.putCall.status}). ` : "") +
+      `Seguro para operar: ${safeToTrade ? "si" : "no"}. ` +
+      `Senales -> COMPRAR: ${buySignals.length}, VENDER: ${sellSignals.length}, ESPERAR: ${waitSignals.length}.`
+  );
+  if (resumen) {
+    msg = msg.replace("*CONTEXTO DEL MERCADO*", `*RESUMEN*\n${resumen}\n\n*CONTEXTO DEL MERCADO*`);
   }
 
   // Senales
